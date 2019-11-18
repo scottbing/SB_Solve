@@ -5,6 +5,7 @@
 
 var  canvas;
 var ctx;
+var output;
 
 var Width = 1200;
 var Height = 800;
@@ -27,9 +28,8 @@ for (c = 0; c < tileColumnCount; c++) {
         tiles[c][r] = {x: c*(tileW+3), y: r*(tileH+3), state: 'e'}; // state is 'e' for empty
     }
 }
-
-tiles[0][0].state = 's'; //start tile
-tiles[tileColumnCount-1][tileRowCount-1].state = 'f';
+tiles[0][0].state = 's'; //start tile   
+tiles[tileColumnCount-1][tileRowCount-1].state = 'f';   // finish tile
 
 // color each of the squares according to its currrent state value
 function rect(x,y,w,h,state) {
@@ -41,6 +41,10 @@ function rect(x,y,w,h,state) {
         ctx.fillStyle = '#808080'; // RGB 
     } else if (state == 'w') {
         ctx.fillStyle = '#0000FF'; // RGB 
+    } else if (state == 'x') {
+        ctx.fillStyle = '#000000'; // RGB
+    } else {
+        ctx.fillStyle = '#FFFF00'; // RGB 
     }
       
     ctx.beginPath();
@@ -64,9 +68,121 @@ function draw() {
     }
 }
 
+function solveMaze() {
+    var Xqueue = [0];
+    var Yqueue = [0];
+    
+    var pathFound = false;
+    
+    var xLoc;
+    var yLoc;
+    
+    while (Xqueue.length > 0 && !pathFound) {
+        console.log("Xqueue.length: ", Xqueue.length);
+        console.log("pathFound: ", pathFound);
+        xLoc = Xqueue.shift();
+        console.log("after shift 'x' xLoc", xLoc);
+        console.log("after shift 'x' yLoc", yLoc);
+        yLoc = Yqueue.shift();
+        console.log("after shift 'y' xLoc", xLoc);
+        console.log("after shift 'y' yLoc", yLoc);
+        
+        if (xLoc > 0) {
+            if (tiles[xLoc-1][yLoc].state == 'f') {
+                pathFound = true;
+            }
+        }
+        if (xLoc < tileColumnCount - 1) {
+            if (tiles[xLoc+1][yLoc].state == 'f') {
+                pathFound = true;
+            }
+        }
+        if (yLoc > 0) {
+            if (tiles[xLoc][yLoc-1].state == 'f') {
+                pathFound = true;
+            }
+        }
+        if (yLoc < tileRowCount - 1) {
+            if (tiles[xLoc][yLoc+1].state == 'f') {
+                pathFound = true;
+            }
+        }
+        
+    
+        if (xLoc > 0) {
+            if (tiles[xLoc-1][yLoc].state == 'e') {
+                Xqueue.push(xLoc-1);
+                Yqueue.push(yLoc);
+                tiles[xLoc-1][yLoc].state = tiles[xLoc][yLoc].state + 'l';
+            }
+        }
+        if (xLoc < tileColumnCount - 1) {
+            if (tiles[xLoc+1][yLoc].state == 'e') {
+                Xqueue.push(xLoc+1);
+                Yqueue.push(yLoc);
+                tiles[xLoc+1][yLoc].state = tiles[xLoc][yLoc].state + 'r';
+            }
+        }
+        if (yLoc > 0) {
+            if (tiles[xLoc][yLoc-1].state == 'e') {
+                Xqueue.push(xLoc);
+                Yqueue.push(yLoc-1); 
+                tiles[xLoc][yLoc-1].state = tiles[xLoc][yLoc].state + 'u';
+            }
+        }
+        if (yLoc < tileRowCount - 1) {
+            if (tiles[xLoc][yLoc+1].state == 'e') {
+                Xqueue.push(xLoc);
+                Yqueue.push(yLoc+1);
+                tiles[xLoc][yLoc+1].state = tiles[xLoc][yLoc].state + 'd';
+            }
+        }            
+    }
+    
+    if (!pathFound) {
+        output.innerHTML = 'No Solution!';
+    } else {
+        output.innerHTML = 'Solved!';
+        var path = tiles[xLoc][yLoc].state;
+        var pathLength = path.length;
+        var currX = 0
+        var currY = 0;
+        for (var i = 0; i < pathLength-1; i++) {
+            if (path.charAt(i+1) == 'u') {
+                currY -= 1;
+            }
+            if (path.charAt(i+1) == 'd') {
+                currY += 1;
+            }
+            if (path.charAt(i+1) == 'r') {
+                currX += 1;
+            }
+            if (path.charAt(i+1) == 'l') {
+                currX -= 1;
+            }
+            tiles[currX][currY].state = 'x';
+        }
+    }
+}
+
+function reset() {
+    for (c = 0; c < tileColumnCount; c++) {
+    tiles[c] = [];
+    for (r = 0; r < tileRowCount;  r++) {
+        tiles[c][r] = {x: c*(tileW+3), y: r*(tileH+3), state: 'e'}; // state is 'e' for empty
+        }   
+    }
+    tiles[0][0].state = 's'; //start tile
+    tiles[tileColumnCount-1][tileRowCount-1].state = 'f';  // finish tile
+    
+    // clear  output area
+    output.innerHTML + '';
+} 
+
 function init() {
     canvas = document.getElementById("myCanvas");
     ctx = canvas.getContext("2d");
+    output = document.getElementById("outcome");
     return setInterval(draw, 10);
 }
 
